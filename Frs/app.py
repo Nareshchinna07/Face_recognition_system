@@ -14,16 +14,13 @@ import joblib
 app = Flask(__name__)
 
 
-#Saving Date today in 2 different formats
 datetoday = date.today().strftime("%m_%d_%y")
 datetoday2 = date.today().strftime("%d-%B-%Y")
 
 
-#### Initializing VideoCapture object to access WebCam
 face_detector = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
 
-#### If these directories don't exist, create them
 if not os.path.isdir('Attendance'):
     os.makedirs('Attendance')
 if not os.path.isdir('static'):
@@ -32,15 +29,13 @@ if not os.path.isdir('static/faces'):
     os.makedirs('static/faces')
 if f'Attendance-{datetoday}.csv' not in os.listdir('Attendance'):
     with open(f'Attendance/Attendance-{datetoday}.csv','w') as f:
-        f.write('Name,Roll,Time')
+        f.write('Name,Roll,Time') #Naresh,07.
 
 
-#### get a number of total registered users
 def totalreg():
     return len(os.listdir('static/faces'))
 
 
-#### extract the face from an image
 def extract_faces(img):
     try:
         if img.shape!=(0,0,0):
@@ -52,13 +47,11 @@ def extract_faces(img):
     except:
         return []
     
-#### Identify face using ML model
 def identify_face(facearray):
     model = joblib.load('static/face_recognition_model.pkl')
     return model.predict(facearray)
 
 
-#### A function which trains the model on all the faces available in faces folder
 def train_model():
     faces = []
     labels = []
@@ -75,7 +68,6 @@ def train_model():
     joblib.dump(knn,'static/face_recognition_model.pkl')
 
 
-#### Extract info from today's attendance file in attendance folder
 def extract_attendance():
     df = pd.read_csv(f'Attendance/Attendance-{datetoday}.csv')
     names = df['Name']
@@ -85,14 +77,13 @@ def extract_attendance():
     return names,rolls,times,l
 
 
-#### Add Attendance of a specific user
 def add_attendance(name):
     username = name.split('_')[0]
     userid = name.split('_')[1]
     current_time = datetime.now().strftime("%H:%M:%S")
     
     df = pd.read_csv(f'Attendance/Attendance-{datetoday}.csv')
-    if int(userid) not in list(df['Roll']):
+    if int(userid) not in list(df['Roll']):#21B21A4276
         with open(f'Attendance/Attendance-{datetoday}.csv','a') as f:
             f.write(f'\n{username},{userid},{current_time}')
 
@@ -120,14 +111,12 @@ def deletefolder(duser):
 
 ################## ROUTING FUNCTIONS #########################
 
-#### Our main page
 @app.route('/')
 def home():
     names,rolls,times,l = extract_attendance()    
     return render_template('home.html',names=names,rolls=rolls,times=times,l=l,totalreg=totalreg(),datetoday2=datetoday2)  
 
 
-#### This function will run when we click on Take Attendance Button
 @app.route('/start',methods=['GET'])
 def start():
     if 'face_recognition_model.pkl' not in os.listdir('static'):
@@ -153,7 +142,6 @@ def start():
     return render_template('home.html',names=names,rolls=rolls,times=times,l=l,totalreg=totalreg(),datetoday2=datetoday2) 
 
 
-#### This function will run when we add a new user
 @app.route('/add',methods=['GET','POST'])
 def add():
     newusername = request.form['newusername']
@@ -187,6 +175,5 @@ def add():
     return render_template('home.html',names=names,rolls=rolls,times=times,l=l,totalreg=totalreg(),datetoday2=datetoday2) 
 
 
-#### Our main function which runs the Flask App
 if __name__ == '__main__':
     app.run(debug=True)
